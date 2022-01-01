@@ -1,6 +1,10 @@
 #include"xviHeader.h"
 #include <vector>
-
+#include <Eigen/Dense>
+#include <fstream>
+#include "phaseUnwrap/phaseUnwrap.h"
+using Eigen::Matrix2d;
+using Eigen::Matrix2f;
 xviHeader::xviHeader()			//	默认构造函数
 {
 	this->h = new XVIHANDLE;
@@ -52,16 +56,23 @@ bool xviHeader::OpenXvi(const char* file)			//	打开xvi文件
 		return false;
 	}
 }
+#pragma optimize("", off)
 void xviHeader::OutputXvi(const char* file)		//	读取Xvi文件
 {
-	string fileName = file; 
+	string fileName = file;
 	string phaseName = fileName + "phase.txt";
+	string phaseUnName = fileName + "phaseUn.txt";
 	fileName += ".txt";
 	if (this->e == I_OK)
 	{
 		int resolution = 320 * 256;
-		vector<int>	frame0(resolution), frame1(resolution), frame2(resolution), frame3(resolution);// , phase(resolution);
-
+		short* frame0 = new short[resolution];
+		short* frame1 = new short[resolution];
+		short* frame2 = new short[resolution];
+		short* frame3 = new short[resolution];
+		float* phase = new float[resolution];
+		float* phaseUn = new float[resolution];
+		vector<float> phase1, phase2;
 		unsigned long ulframeIdx = 0;
 
 		word* frameBuffer = 0;
@@ -70,10 +81,12 @@ void xviHeader::OutputXvi(const char* file)		//	读取Xvi文件
 		frameBuffer = new word[size];
 		FILE* fileOP; 
 		FILE* phaseOP;
+		FILE* phaseUnOP;
+		phaseUnOP = fopen(phaseUnName.c_str(), "w");
 		fileOP = fopen(fileName.c_str(), "w");
 		phaseOP = fopen(phaseName.c_str(), "w");
 		XviError e1;
-		for (int i = 0; i < XVI_GetFrameCount(*(this->h)); i++)
+		for (int i = 0; i < XVI_GetFrameCount(*(this->h));  i++)
 		{
 			e1 = XVI_GetFrame(*h, FT_NATIVE, i, frameBuffer, 1);
 			if (e1 == I_OK)
@@ -91,51 +104,55 @@ void xviHeader::OutputXvi(const char* file)		//	读取Xvi文件
 					cout << "█";
 				}
 				int frameIndex = i % 4;
-				vector<int> frame(resolution);
+				float* frame = new float[resolution];
+				
 				for (int j = 0; j < resolution; j++)
 				{
 					frame[j] = *(frameBuffer + j);
 					fprintf(fileOP, "%d ", *(frameBuffer + j));
-					
-				}
-				if (frameIndex == 0)
-				{
-					frame0 = frame;
-				}
-				else if (frameIndex == 1)
-				{
-					frame1 = frame;
-				}
-				else if (frameIndex == 2)
-				{
-					frame2 = frame;
-				}
-				else
-				{
-					frame3 = frame;
+					if (frameIndex == 0)
+					{
+						frame0[j] = *(frameBuffer + j);
+					}
+					else if(frameIndex == 1)
+					{
+						frame1[j] = *(frameBuffer + j);
+					}
+					else if (frameIndex == 2)
+					{
+						frame2[j] = *(frameBuffer + j);
+					}
+					else if (frameIndex == 3)
+					{
+						frame3[j] = *(frameBuffer + j);
+						float phase_temp = atan2(frame3[j] - frame1[j], frame0[j] - frame2[j]);
+						phase[j] = phase_temp / TWOPI;
+						phase1.push_back(phase_temp);
+						fprintf(phaseOP, "%f ", phase1[j]);
+					}
 				}
 				if (frameIndex == 3 && i > 0)
-				{	
-					for (int j = 0; j < resolution; j++)
+				{
+					phaseUnwrap(phase, phaseUn);
+					for (int i = 0; i < resolution; i++)
 					{
-						double phase;
-						phase = atan2(frame3[j] - frame1[j], frame0[j] - frame2[j]);
-						fprintf(phaseOP, "%f ", phase);
+						phase2.push_back(phaseUn[i]);
+						fprintf(phaseUnOP, "%f ", phaseUn[i]);
 					}
+					fprintf(phaseUnOP, "\n");
 					fprintf(phaseOP, "\n");
 				}
 				fprintf(fileOP, "\n");
-				
 			}
 		}
-		cout << endl;
+		//cout << endl;
 		
 		::fclose(fileOP);
 		::fclose(phaseOP);
 		delete [] frameBuffer;
 	}
 }
-
+#pragma optimize("", on)
 void xviHeader::ShowInfo()
 {
 	if (e == I_OK)
