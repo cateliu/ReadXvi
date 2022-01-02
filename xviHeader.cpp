@@ -56,7 +56,7 @@ bool xviHeader::OpenXvi(const char* file)			//	打开xvi文件
 		return false;
 	}
 }
-#pragma optimize("", off)
+//#pragma optimize("", off)
 void xviHeader::OutputXvi(const char* file)		//	读取Xvi文件
 {
 	string fileName = file;
@@ -72,7 +72,7 @@ void xviHeader::OutputXvi(const char* file)		//	读取Xvi文件
 		short* frame3 = new short[resolution];
 		float* phase = new float[resolution];
 		float* phaseUn = new float[resolution];
-		vector<float> phase1, phase2;
+		//vector<float> phase1, phase2;
 		unsigned long ulframeIdx = 0;
 
 		word* frameBuffer = 0;
@@ -127,8 +127,8 @@ void xviHeader::OutputXvi(const char* file)		//	读取Xvi文件
 						frame3[j] = *(frameBuffer + j);
 						float phase_temp = atan2(frame3[j] - frame1[j], frame0[j] - frame2[j]);
 						phase[j] = phase_temp / TWOPI;
-						phase1.push_back(phase_temp);
-						fprintf(phaseOP, "%f ", phase1[j]);
+						//phase1.push_back(phase_temp);
+						fprintf(phaseOP, "%f ", phase_temp);
 					}
 				}
 				if (frameIndex == 3 && i > 0)
@@ -136,7 +136,7 @@ void xviHeader::OutputXvi(const char* file)		//	读取Xvi文件
 					phaseUnwrap(phase, phaseUn);
 					for (int i = 0; i < resolution; i++)
 					{
-						phase2.push_back(phaseUn[i]);
+						//phase2.push_back(phaseUn[i]);
 						fprintf(phaseUnOP, "%f ", phaseUn[i]);
 					}
 					fprintf(phaseUnOP, "\n");
@@ -152,7 +152,7 @@ void xviHeader::OutputXvi(const char* file)		//	读取Xvi文件
 		delete [] frameBuffer;
 	}
 }
-#pragma optimize("", on)
+//#pragma optimize("", on)
 void xviHeader::ShowInfo()
 {
 	if (e == I_OK)
