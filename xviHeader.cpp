@@ -103,6 +103,28 @@ void xviHeader::OutputXvi(const char* file)		//	¶ÁÈ¡XviÎÄ¼þ
 				{
 					cout << "¨€";
 				}
+				if (i % 20000 == 0  && i > 0)
+				{
+					fclose(phaseOP);
+					fclose(fileOP);
+					fclose(phaseUnOP);
+					/*fileName.clear();
+					phaseName.clear();
+					phaseUnName.clear();*/
+					
+					fileName = file;
+					phaseName = fileName + "phase_part" + to_string(i / 5000) + ".txt";
+					phaseUnName = fileName + "phaseUn_part" + to_string(i / 5000) + ".txt";
+					fileName = fileName + ".txt";
+					//cout << fileName << " " << phaseUnName << " " << phaseName;
+					//system("pause");
+					fileOP = fopen(fileName.c_str(), "a");
+					phaseOP = fopen(phaseName.c_str(), "a");
+					phaseUnOP = fopen(phaseUnName.c_str(), "a");
+					cout << fileName << " " << phaseUnName << " " << phaseName;
+				}
+
+
 				int frameIndex = i % 4;
 				float* frame = new float[resolution];
 				
